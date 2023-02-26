@@ -3,6 +3,7 @@ import selectorlib
 from headers import HEADERS
 
 URL = "https://programmer100.pythonanywhere.com/tours/"
+tour_file = "tours.txt"
 
 
 def scrape(url):
@@ -18,7 +19,26 @@ def extract(source):
     return value
 
 
+def send_email():
+    print("Email was sent")
+
+
+def store(extracted_data):
+    with open(tour_file, "a") as file:
+        file.write(extracted_data + "\n")
+
+
+def read(extracted_data):
+    with open(tour_file, "r") as file:
+        return file.read()
+
+
 if __name__ == "__main__":
     scraped = scrape(URL)
     extracted = extract(scraped)
     print(extracted)
+    content = read(extracted)
+    if extracted.lower() != "no upcoming tours":
+        if extracted not in content:
+            store(extracted)
+            send_email()
