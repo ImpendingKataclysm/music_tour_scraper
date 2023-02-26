@@ -152,3 +152,4 @@ cython_debug/
 .idea/
 
 tours.txt
+app_data.py
