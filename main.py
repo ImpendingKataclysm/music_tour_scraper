@@ -1,11 +1,13 @@
 import requests
 import selectorlib
 import time
+import sqlite3
 from headers import HEADERS
 from send_email import send_email
 
 URL = "https://programmer100.pythonanywhere.com/tours/"
 tour_file = "tours.txt"
+connection = sqlite3.connect("tour_data.db")
 
 
 def scrape(url):
@@ -16,19 +18,38 @@ def scrape(url):
 
 
 def extract(source):
+    """ Extract specified element from page source code"""
     extractor = selectorlib.Extractor.from_yaml_file("extract.yaml")
     value = extractor.extract(source)["tours"]
     return value
 
 
+def get_row(data):
+    """ Converts a string of comma separated data into a list of strings with
+    no surrounding whitespace"""
+    row = data.split(",")
+    row = [item.strip() for item in row]
+    return row
+
+
 def store(extracted_data):
-    with open(tour_file, "a") as file:
-        file.write(extracted_data + "\n")
+    """ Add new event to tour database"""
+    row = get_row(extracted_data)
+    print(row)
+    cursor = connection.cursor()
+    cursor.executemany("INSERT INTO events VALUES(?,?,?)", (row, ))
+    connection.commit()
 
 
 def read(extracted_data):
-    with open(tour_file, "r") as file:
-        return file.read()
+    """ Query tour database to find the specified event """
+    band, city, date = get_row(extracted_data)
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM events WHERE band=? AND city=? AND date=?",
+                   (band, city, date))
+    rows = cursor.fetchall()
+    return rows
 
 
 if __name__ == "__main__":
@@ -36,9 +57,10 @@ if __name__ == "__main__":
         scraped = scrape(URL)
         extracted = extract(scraped)
         print(extracted)
-        content = read(extracted)
         if extracted.lower() != "no upcoming tours":
-            if extracted not in content:
+            content = read(extracted)
+            print(content)
+            if not content:
                 store(extracted)
                 send_email(message="New event found!")
         time.sleep(2)

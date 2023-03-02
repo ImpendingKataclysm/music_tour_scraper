@@ -153,3 +153,4 @@ cython_debug/
 
 tours.txt
 app_data.py
+tour_data.db
