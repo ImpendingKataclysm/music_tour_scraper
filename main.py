@@ -62,5 +62,10 @@ if __name__ == "__main__":
             print(content)
             if not content:
                 store(extracted)
-                send_email(message="New event found!")
+                message = f"""\
+                New event found!
+                
+                {extracted}
+                """
+                send_email(message=message)
         time.sleep(2)
